@@ -12,59 +12,6 @@ import tqdm
 import utils
 import pmonad
 
-def demonstrate_systematic_learning_22(num_samples=1000, num_runs=1, **kwds):
-    """ 2^2!=24 possible languages. """
-    # works with redundancy=2, positional=False, split_alpha=1
-    # final posterior is 1/2 because of symmetry
-    targets = [0, 1, 7]
-    df, support, probs = learn_from_samples(K=2, V=2, num_samples=num_samples, targets=targets*num_runs, **kwds)
-    grammars = list(itertools.permutations([x+'#' for x in support]))
-    def gen():
-        for target in targets:
-            curves = il.curves_from_sequences(grammars[target], np.exp(probs))
-            yield {
-                'target': target,
-                'grammar': grammars[target],
-                'ee': il.ee(curves),
-                'ms_auc': il.ms_auc(curves),
-            }
-    return df, probs, pd.DataFrame(gen())    
-    
-
-def demonstrate_systematic_learning_23(num_samples=20000, num_runs=1, **kwds):
-    """ 2**3!=40320 possible languages. """
-    targets = [
-        0, # id(1,2,3)
-        1, # toffoli(1,2,3) -- flip on more frequent control bits
-        5040, # toffoli(not(1), not(2), 3) -- flip on less frequent control bits
-        121, # cnot(2,3) -- flip on more frequent control bit
-        5046, # cnot(not(2), 3) -- flip on less frequent control bit
-        11536, # weakly systematic -- if positional=True, no different from strongly systematic
-        10000, # nonsystematic
-        15000,
-        20000,
-        25000,
-        30000, # nonsystematic
-    ]
-    df, support, probs = learn_from_samples(
-        K=3,
-        V=2,
-        num_samples=num_samples,
-        targets=tqdm.tqdm(targets*num_runs),
-        **kwds
-    )
-    grammars = list(itertools.permutations([x+'#' for x in support]))    
-    def gen():
-        for target in targets:
-            curves = il.curves_from_sequences(grammars[target], np.exp(probs))
-            yield {
-                'target': target,
-                'grammar': grammars[target],
-                'ee': il.ee(curves),
-                'ms_auc': il.ms_auc(curves),
-            }
-    return df, probs, pd.DataFrame(gen())
-
 def learn_from_samples(
         targets=[0],
         K=3, # sequence length
